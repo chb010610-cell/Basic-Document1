@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ISO质量体系文档生成器</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: -apple-system, "Microsoft YaHei", "Segoe UI", sans-serif; background:#f0f2f5; color:#333; }
+.header-bar { background:linear-gradient(135deg,#1a5fb4 0%,#3584e4 100%); color:#fff; padding:16px 24px; display:flex; align-items:center; justify-content:space-between; box-shadow:0 2px 10px rgba(0,0,0,.15); position:sticky;top:0;z-index:100; }
+.header-bar h1 { font-size:20px; font-weight:600; letter-spacing:1px; }
+.header-bar .subtitle { font-size:12px; opacity:.85; margin-top:2px; }
+.container { max-width:1200px; margin:20px auto; padding:0 16px; }
+
+/* Form sections */
+.section { background:#fff; border-radius:12px; box-shadow:0 1px 6px rgba(0,0,0,.08); margin-bottom:18px; overflow:hidden; }
+.section-header { background:#f8f9fa; padding:14px 20px; border-bottom:1px solid #e9ecef; cursor:pointer; user-select:none; display:flex; align-items:center; justify-content:space-between; transition:background .2s; }
+.section-header:hover { background:#eef2ff; }
+.section-header h3 { font-size:15px; color:#1a5fb4; font-weight:600; }
+.section-header .arrow { transition:transform .3s; color:#999; font-size:12px; }
+.section-header .arrow.open { transform:rotate(90deg); }
+.section-body { padding:18px 20px; }
+.section-body.collapsed { display:none; }
+
+/* Form grid */
+.form-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:14px 20px; }
+.form-group { display:flex; flex-direction:column; }
+.form-group label { font-size:13px; color:#555; font-weight:500; margin-bottom:5px; display:flex; align-items:center; gap:4px; }
+.form-group label .hint { font-size:11px; color:#999; font-weight:normal; }
+.form-group input, .form-group textarea, .form-group select {
+    border:1px solid #d0d7de; border-radius:8px; padding:9px 12px; font-size:14px;
+    transition:border-color .2s, box-shadow .2s; background:#fff; outline:none; width:100%;
+}
+.form-group input:focus, .form-group textarea:focus { border-color:#3584e4; box-shadow:0 0 0 3px rgba(53,132,228,.15); }
+.form-group textarea { min-height:60px; resize:vertical; line-height:1.5; }
+.form-group.full-width { grid-column:1 / -1; }
+
+/* Buttons */
+.btn-row { display:flex; gap:12px; flex-wrap:wrap; justify-content:center; margin:24px 0; }
+.btn {
+    padding:12px 28px; border:none; border-radius:10px; font-size:15px; font-weight:600;
+    cursor:pointer; transition:all .25s; display:inline-flex; align-items:center; gap:8px;
+    letter-spacing:.5px;
+}
+.btn-primary { background:linear-gradient(135deg,#3584e4,#1a5fb4); color:#fff; box-shadow:0 3px 12px rgba(53,132,228,.35); }
+.btn-primary:hover { transform:translateY(-1px); box-shadow:0 5px 18px rgba(53,132,228,.45); }
+.btn-primary:active { transform:translateY(0); }
+.btn-success { background:linear-gradient(135deg,#26a269,#1b7d52); color:#fff; box-shadow:0 3px 12px rgba(38,162,105,.35); }
+.btn-success:hover { transform:translateY(-1px); box-shadow:0 5px 18px rgba(38,162,105,.45); }
+.btn-warning { background:linear-gradient(135deg,#e66100,#c64d00); color:#fff; box-shadow:0 3px 12px rgba(230,97,0,.35); }
+.btn-warning:hover { transform:translateY(-1px); box-shadow:0 5px 18px rgba(230,97,0,.45); }
+.btn-secondary { background:#f0f2f5; color:#333; border:1px solid #d0d7de; }
+.btn-secondary:hover { background:#e9ecef; }
+.btn:disabled { opacity:.55; cursor:not-allowed; transform:none !important; }
+
+/* Result area */
+.result-area { margin-top:20px; display:none; }
+.result-area.show { display:block; }
+.result-summary { background:#fff; border-radius:12px; box-shadow:0 1px 6px rgba(0,0,0,.08); padding:20px; margin-bottom:16px; }
+.result-summary h3 { color:#1a5fb4; margin-bottom:12px; font-size:16px; }
+.file-list { display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:10px; margin-top:12px; }
+.file-card {
+    background:#f8f9fa; border:1px solid #e9ecef; border-radius:10px; padding:14px 16px;
+    cursor:pointer; transition:all .2s; display:flex; align-items:center; justify-content:space-between;
+}
+.file-card:hover { border-color:#3584e4; box-shadow:0 2px 8px rgba(53,132,228,.15); background:#fff; }
+.file-card .fname { font-size:13px; font-weight:500; color:#333; }
+.file-card .count { font-size:12px; color:#888; }
+.file-card.error { border-color:#e66100; background:#fef6ee; }
+.file-card.error .count { color:#e66100; }
+
+/* Preview iframe */
+.preview-container { background:#fff; border-radius:12px; box-shadow:0 1px 6px rgba(0,0,0,.08); margin-top:16px; overflow:hidden; }
+.preview-toolbar { background:#f8f9fa; padding:10px 16px; border-bottom:1px solid #e9ecef; display:flex; align-items:center; justify-content:space-between; font-size:13px; }
+.preview-toolbar select { padding:5px 10px; border:1px solid #ccc; border-radius:6px; font-size:13px; }
+.preview-iframe { width:100%; height:700px; border:none; }
+
+/* Loading */
+.loading-overlay { display:none; position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(255,255,255,.85);z-index:9999; align-items:center;justify-content:center; }
+.loading-overlay.show { display:flex; }
+.spinner { width:48px;height:48px;border:4px solid #e0e0e0;border-top-color:#3584e4;border-radius:50%; animation:spin .7s linear infinite; }
+@keyframes spin { to{transform:rotate(360deg)} }
+.loading-text { margin-left:14px;font-size:16px;color:#333;font-weight:500; }
+
+/* Toast notification */
+.toast { position:fixed;top:70px;right:20px;padding:14px 22px;border-radius:10px;font-size:14px;
+    z-index:10000;transform:translateX(400px);transition:transform .35s;max-width:380px;box-shadow:0 4px 16px rgba(0,0,0,.12); }
+.toast.show { transform:translateX(0); }
+.toast.success { background:#d4edda; border-left:4px solid #28a745; color:#155724; }
+.toast.error { background:#f8d7da; border-left:4px solid #dc3545; color:#721c24; }
+.toast.info { background:#cce5ff; border-left:4px solid #004085; color:#004085; }
+
+/* Status badge */
+.status-badge { display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;margin-left:8px; }
+.status-ok { background:#d4edda;color:#155724; }
+.status-warn { background:#fff3cd;color:#856404; }
+.status-error { background:#f8d7da;color:#721c24; }
+
+/* Print styles */
+@media print { body * { visibility:hidden; } .print-area, .print-area * { visibility:visible; } .print-area { position:absolute;left:0;top:0;width:100%; } }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header-bar">
+  <div>
+    <h1>📋 ISO质量体系文档生成器</h1>
+    <div class="subtitle">填写信息 → 一键生成全套文档（含页眉页脚替换）</div>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- === Section 1: 基本信息 === -->
+<div class="section" id="sec-basic">
+  <div class="section-header" onclick="toggleSection('basic')">
+    <h3>🏢 基本信息</h3>
+    <span class="arrow open" id="arrow-basic">▶</span>
+  </div>
+  <div class="section-body" id="body-basic">
+    <div class="form-grid">
+      <div class="form-group full-width">
+        <label>公司全称 <span style="color:red">*</span></label>
+        <input type="text" id="company_name" value="宁波市海曙新艺洁具有限公司" placeholder="请输入公司全称">
+      </div>
+      <div class="form-group full-width">
+        <label>公司地址</label>
+        <input type="text" id="address" value="浙江省宁波市海曙区横街镇桃源村" placeholder="详细地址">
+      </div>
+      <div class="form-group">
+        <label>主营产品</label>
+        <input type="text" id="product" value="拖把、刷子、扫把等日用洁具" placeholder="产品描述">
+      </div>
+      <div class="form-group">
+        <label>英文简写 <span class="hint">（用于文件编号前缀）</span></label>
+        <input type="text" id="english_abbr" value="XY" placeholder="如 XY, KL 等">
+      </div>
+      <div class="form-group">
+        <label>营业执照编码</label>
+        <input type="text" id="license_code" value="91330212X10144809X" placeholder="">
+      </div>
+      <div class="form-group">
+        <label>进料供应商</label>
+        <input type="text" id="supplier" value="浙江旭华包装有限公司" placeholder="">
+      </div>
+      <div class="form-group full-width">
+        <label>公司简介</label>
+        <textarea id="company_intro" rows="3" placeholder="公司简介文本..."></textarea>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- === Section 2: 管理层人员 === -->
+<div class="section" id="sec-mgmt">
+  <div class="section-header" onclick="toggleSection('mgmt')">
+    <h3>👥 管理层人员</h3>
+    <span class="arrow open" id="arrow-mgmt">▶</span>
+  </div>
+  <div class="section-body" id="body-mgmt">
+    <div class="form-grid">
+      <div class="form-group"><label>总经理</label><input type="text" id="gm_name" value="夏亚明"></div>
+      <div class="form-group"><label>生产部经理</label><input type="text" id="production_mgr" value="龚伟"></div>
+      <div class="form-group"><label>管理者代表</label><input type="text" id="mgr_rep" value="贾宇"></div>
+      <div class="form-group"><label>人事部负责人</label><input type="text" id="hr_head" value="于静洁"></div>
+      <div class="form-group"><label>业务部负责人</label><input type="text" id="sales_head" value="项万青"></div>
+      <div class="form-group"><label>采购部负责人</label><input type="text" id="purchase_head" value="阮璐"></div>
+      <div class="form-group"><label>技术部负责人</label><input type="text" id="tech_head" value="王波"></div>
+      <div class="form-group"><label>原材料仓库</label><input type="text" id="raw_warehouse" value="张丽容"></div>
+      <div class="form-group"><label>成品仓库</label><input type="text" id="finished_warehouse" value="俄底只桑"></div>
+      <div class="form-group"><label>机修</label><input type="text" id="mechanic" value="夏方强"></div>
+    </div>
+  </div>
+</div>
+
+<!-- === Section 3: 检验人员 === -->
+<div class="section" id="sec-inspect">
+  <div class="section-header" onclick="toggleSection('inspect')">
+    <h3>🔬 检验人员</h3>
+    <span class="arrow open" id="arrow-inspect">▶</span>
+  </div>
+  <div class="section-body" id="body-inspect">
+    <div class="form-grid">
+      <div class="form-group"><label>进料检验 (IQC)</label><input type="text" id="iqc_person" value="戴海能"></div>
+      <div class="form-group"><label>制程检验1 (IPQC)</label><input type="text" id="ipqc1_person" value="解欧红"></div>
+      <div class="form-group"><label>制程检验2 (IPQC)</label><input type="text" id="ipqc2_person" value="五金"></div>
+      <div class="form-group"><label>制程检验3 (IPQC)</label><input type="text" id="ipqc3_person" value="李丹"></div>
+      <div class="form-group"><label>成品检验 (FQC)</label><input type="text" id="fqc_person" value="贾宇"></div>
+    </div>
+  </div>
+</div>
+
+<!-- === Section 4: 工序与生产 === -->
+<div class="section" id="sec-process">
+  <div class="section-header" onclick="toggleSection('process')">
+    <h3>⚙️ 工序与生产</h3>
+    <span class="arrow open" id="arrow-process">▶</span>
+  </div>
+  <div class="section-body" id="body-process">
+    <div class="form-grid">
+      <div class="form-group"><label>工序-原料</label><input type="text" id="process_raw" value="原料"></div>
+      <div class="form-group"><label>工序1</label><input type="text" id="process_1" value="五金"></div>
+      <div class="form-group"><label>工序2</label><input type="text" id="process_2" value="注塑☆"></div>
+      <div class="form-group"><label>工序3</label><input type="text" id="process_3" value="纺织"></div>
+      <div class="form-group"><label>工序4</label><input type="text" id="process_4" value="裁剪"></div>
+      <div class="form-group"><label>工序5</label><input type="text" id="process_5" value="缝纫"></div>
+      <div class="form-group"><label>工序6</label><input type="text" id="process_6" value="装配"></div>
+      <div class="form-group"><label>工序7</label><input type="text" id="process_7" value="包装"></div>
+      <div class="form-group"><label>特殊工序</label><input type="text" id="special_process" value="注塑☆"></div>
+      <div class="form-group"><label>外发工序</label><input type="text" id="outsource_process" value="无"></div>
+    </div>
+  </div>
+</div>
+
+<!-- === Section 5: 质量方针与抽样标准 === -->
+<div class="section" id="sec-quality">
+  <div class="section-header" onclick="toggleSection('quality')">
+    <h3>📊 质量方针与抽样标准</h3>
+    <span class="arrow open" id="arrow-quality">▶</span>
+  </div>
+  <div class="section-body" id="body-quality">
+    <div class="form-grid">
+      <div class="form-group full-width">
+        <label>质量目标</label>
+        <textarea id="quality_goals" rows="2" placeholder="制程不良率≤2%&#10;成品合格率≥98%..."></textarea>
+      </div>
+      <div class="form-group full-width">
+        <label>质量方针</label>
+        <textarea id="quality_policy" rows="4" placeholder="质量方针全文..."></textarea>
+      </div>
+      <div class="form-group full-width">
+        <label>进料抽样标准</label>
+        <textarea id="iqc_sampling" rows="3" placeholder="进料检验的抽样标准和判定规则..."></textarea>
+      </div>
+      <div class="form-group full-width">
+        <label>制程抽样标准</label>
+        <textarea id="ipqc_sampling" rows="2" placeholder="制程检验抽样标准..."></textarea>
+      </div>
+      <div class="form-group full-width">
+        <label>成品抽样标准</label>
+        <textarea id="fqc_sampling" rows="2" placeholder="成品检验抽样标准..."></textarea>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- === Section 6: 日期与版本 === -->
+<div class="section" id="sec-date">
+  <div class="section-header" onclick="toggleSection('date')">
+    <h3>📅 日期与版本号</h3>
+    <span class="arrow open" id="arrow-date">▶</span>
+  </div>
+  <div class="section-body" id="body-date">
+    <div class="form-grid">
+      <div class="form-group">
+        <label>文件日期/程序时间 <span class="hint">（正文+页眉日期）</span></label>
+        <input type="date" id="doc_date" value="2025-03-05">
+      </div>
+      <div class="form-group">
+        <label>版本号 <span class="hint">（B/0 正文 + A/0 页眉同时替换）</span></label>
+        <input type="text" id="version_no" value="B/0" placeholder="B/0, C/1 等">
+      </div>
+      <div class="form-group"><label>内审计划时间</label><input type="text" id="audit_plan_time" value="2025年11月13日"></div>
+      <div class="form-group"><label>内审时间</label><input type="text" id="audit_time" value="2025年11月20日"></div>
+      <div class="form-group"><label>内审改进时间</label><input type="text" id="audit_improve" value="2025年12月5日"></div>
+      <div class="form-group"><label>管理评审时间</label><input type="text" id="review_time" value="2025年12月8日"></div>
+      <div class="form-group"><label>第二次内审时间</label><input type="text" id="audit_time2" value="2025年12月15日"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Action Buttons -->
+<div class="btn-row">
+  <button class="btn btn-primary" onclick="generateDocs()" id="btn-generate">🚀 生成全部文档</button>
+  <button class="btn btn-success" onclick="downloadAll()" id="btn-download" disabled>📦 导出 Word 压缩包</button>
+  <button class="btn btn-warning" onclick="printPreview()" id="btn-print" disabled>🖨️ 打印预览</button>
+  <button class="btn btn-secondary" onclick="resetForm()">🔄 重置表单</button>
+</div>
+
+<!-- Loading overlay -->
+<div class="loading-overlay" id="loading">
+  <div class="spinner"></div>
+  <div class="loading-text">正在生成文档，请稍候...</div>
+</div>
+
+<!-- Result area -->
+<div class="result-area" id="resultArea">
+  <div class="result-summary">
+    <h3>✅ 生成完成 <span id="statusBadge" class="status-badge status-ok"></span></h3>
+    <div id="resultInfo" style="font-size:14px;color:#666;"></div>
+    <div class="file-list" id="fileList"></div>
+  </div>
+
+  <!-- Preview -->
+  <div class="preview-container" id="previewContainer">
+    <div class="preview-toolbar">
+      <span>📄 文档预览</span>
+      <select id="previewSelect" onchange="changePreview()">
+        <option value="">-- 选择要预览的文档 --</option>
+      </select>
+    </div>
+    <iframe class="preview-iframe" id="previewFrame" src="about:blank"></iframe>
+  </div>
+</div>
+
+</div><!-- container -->
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+const API_BASE = '';
+const FILE_NAMES = [
+  '1程序文件封面.docx','2质量手册.docx','3.程序.docx','4管理手册.docx',
+  '5受控文件清单.docx','7文件发放、收回和销毁记录.docx','8D报告.docx',
+  '9-岗位说明书.docx','10.内 管理评审.docx','10质量各种任命通知(3).docx',
+  '13.质量目标分解考核.docx','13成品召回演练记录.docx','检验人员培训考试.docx'
+];
+let generatedFiles = [];
+
+// Toggle section collapse
+function toggleSection(id) {
+  const body = document.getElementById('body-'+id);
+  const arrow = document.getElementById('arrow-'+id);
+  body.classList.toggle('collapsed');
+  arrow.classList.toggle('open');
+}
+
+// Show toast
+function showToast(msg, type='success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show '+type;
+  setTimeout(() => t.className = 'toast', 3500);
+}
+
+// Collect form data
+function collectFormData() {
+  const ids = [
+    'company_name','address','product','english_abbr','license_code','supplier','company_intro',
+    'gm_name','production_mgr','mgr_rep','hr_head','sales_head','purchase_head','tech_head',
+    'raw_warehouse','finished_warehouse','mechanic',
+    'iqc_person','ipqc1_person','ipqc2_person','ipqc3_person','fqc_person',
+    'process_raw','process_1','process_2','process_3','process_4','process_5','process_6','process_7',
+    'special_process','outsource_process',
+    'quality_goals','quality_policy','iqc_sampling','ipqc_sampling','fqc_sampling',
+    'doc_date','version_no','audit_plan_time','audit_time','audit_improve',
+    'review_time','audit_time2'
+  ];
+  const data = {};
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) data[id] = el.value.trim();
+  });
+  return data;
+}
+
+// Generate documents
+async function generateDocs() {
+  const data = collectFormData();
+  if (!data.company_name) { showToast('请输入公司名称！', 'error'); return; }
+
+  // Show loading
+  document.getElementById('loading').classList.add('show');
+  document.getElementById('btn-generate').disabled = true;
+
+  try {
+    const resp = await fetch(API_BASE + '/api/generate', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(data)
+    });
+    const result = await resp.json();
+
+    if (result.success) {
+      generatedFiles = result.generated || [];
+      showResult(result);
+      showToast(`成功！共 ${result.count} 个文档，替换 ${result.total_replacements} 处`, 'success');
+    } else {
+      showToast('生成失败：' + (result.error || '未知错误'), 'error');
+    }
+  } catch(e) {
+    showToast('请求失败：' + e.message, 'error');
+  } finally {
+    document.getElementById('loading').classList.remove('show');
+    document.getElementById('btn-generate').disabled = false;
+  }
+}
+
+// Show results
+function showResult(result) {
+  const area = document.getElementById('resultArea');
+  area.classList.add('show');
+
+  const badge = document.getElementById('statusBadge');
+  badge.textContent = `${result.count} 文件 · ${result.total_replacements} 次替换`;
+
+  const info = document.getElementById('resultInfo');
+  info.innerHTML = `生成时间：${new Date().toLocaleString()} | 替换规则数：${result.total_replacements > 0 ? Math.round(result.total_replacements/result.count) : 0} 次/文档（平均）`;
+
+  // File list
+  const list = document.getElementById('fileList');
+  list.innerHTML = '';
+
+  // Populate preview select
+  const sel = document.getElementById('previewSelect');
+  sel.innerHTML = '<option value="">-- 选择要预览的文档 --</option>';
+
+  (result.generated || []).forEach(f => {
+    const isErr = f.error !== undefined;
+    const card = document.createElement('div');
+    card.className = 'file-card' + (isErr ? ' error' : '');
+    card.innerHTML = `
+      <div>
+        <div class="fname">${isErr ? '❌ ' : '✅ '}${f.name}</div>
+        <div class="count">${isErr ? f.error : f.replacements + ' 处替换'}</div>
+      </div>`;
+    if (!isErr) {
+      card.onclick = () => previewDoc(f.id);
+      sel.innerHTML += `<option value="${f.id}">${f.name}</option>`;
+    }
+    list.appendChild(card);
+  });
+
+  // Enable buttons
+  document.getElementById('btn-download').disabled = false;
+  document.getElementById('btn-print').disabled = false;
+
+  // Auto-preview first doc
+  const firstOk = (result.generated || []).find(f => !f.error);
+  if (firstOk) previewDoc(firstOk.id);
+}
+
+// Preview a document
+function previewDoc(id) {
+  const frame = document.getElementById('previewFrame');
+  frame.src = API_BASE + '/preview/' + id + '?t=' + Date.now();
+  document.getElementById('previewSelect').value = id;
+  document.getElementById('previewContainer').scrollIntoView({behavior:'smooth'});
+}
+
+// Change preview from select
+function changePreview() {
+  const val = document.getElementById('previewSelect').value;
+  if (val) previewDoc(val);
+  else document.getElementById('previewFrame').src = 'about:blank';
+}
+
+// Download all as ZIP
+async function downloadAll() {
+  window.open(API_BASE + '/download/word', '_blank');
+}
+
+// Print current preview
+function printPreview() {
+  const frame = document.getElementById('previewFrame');
+  try { frame.contentWindow.print(); } catch(e) {
+    window.open(frame.src + '#print=1', '_blank');
+  }
+}
+
+// Reset form to defaults
+function resetForm() {
+  if (!confirm('确定重置所有表单数据？')) return;
+  document.querySelectorAll('input[type=text], textarea, input[type=date]').forEach(el => {
+    el.value = '';
+  });
+  // Set back defaults
+  document.getElementById('company_name').value = '宁波市海曙新艺洁具有限公司';
+  document.getElementById('address').value = '浙江省宁波市海曙区横街镇桃源村';
+  document.getElementById('product').value = '拖把、刷子、扫把等日用洁具';
+  document.getElementById('english_abbr').value = 'XY';
+  document.getElementById('version_no').value = 'B/0';
+  document.getElementById('doc_date').value = '2025-03-05';
+  showToast('表单已重置', 'info');
+}
+</script>
+</body>
+</html>

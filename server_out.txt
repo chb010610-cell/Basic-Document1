@@ -1,0 +1,39 @@
+[START] ISO Document Generator Server Started!
+[INFO] Open: http://127.0.0.1:8765
+[INFO] Templates: C:\Users\Administrator\Desktop\website后台
+[INFO] Output: C:\Users\Administrator\WorkBuddy\20260429103845\output
+[INFO] Template files: 12
+[DEBUG] company_name='ABC' (type=str, len=3)
+[DEBUG] doc_date='2026-07-01' version_no='C/0'
+[DEBUG] ORIGINAL company_name='宁波市海曙新艺洁具有限公司' (len=13)
+[DEBUG] company_name match: False
+[DEBUG] build_replace_map returned 6 pairs
+[WARN] Template not found: C:\Users\Administrator\Desktop\website后台\1程序文件封面.docx
+[WARN] Template not found: C:\Users\Administrator\Desktop\website后台\3.程序.docx
+[WARN] Template not found: C:\Users\Administrator\Desktop\website后台\4管理手册.docx
+[WARN] Template not found: C:\Users\Administrator\Desktop\website后台\5受控文件清单.docx
+[WARN] Template not found: C:\Users\Administrator\Desktop\website后台\7文件发放、收回和销毁记录.docx
+[WARN] Template not found: C:\Users\Administrator\Desktop\website后台\8D报告.docx
+[WARN] Template not found: C:\Users\Administrator\Desktop\website后台\9-岗位说明书.docx
+[WARN] Template not found: C:\Users\Administrator\Desktop\website后台\10.内 管理评审.docx
+[WARN] Template not found: C:\Users\Administrator\Desktop\website后台\10质量各种任命通知(3).docx
+[WARN] Template not found: C:\Users\Administrator\Desktop\website后台\13.质量目标分解考核.docx
+[WARN] Template not found: C:\Users\Administrator\Desktop\website后台\13成品召回演练记录.docx
+[WARN] Template not found: C:\Users\Administrator\Desktop\website后台\检验人员培训考试.docx
+[DEBUG] company_name='测试公司有限公司' (type=str, len=8)
+[DEBUG] doc_date='2025-06-01' version_no='C/1'
+[DEBUG] ORIGINAL company_name='宁波市海曙新艺洁具有限公司' (len=13)
+[DEBUG] company_name match: False
+[DEBUG] build_replace_map returned 6 pairs
+[WARN] Template not found: C:\Users\Administrator\Desktop\website后台\1程序文件封面.docx
+[WARN] Template not found: C:\Users\Administrator\Desktop\website后台\3.程序.docx
+[WARN] Template not found: C:\Users\Administrator\Desktop\website后台\4管理手册.docx
+[WARN] Template not found: C:\Users\Administrator\Desktop\website后台\5受控文件清单.docx
+[WARN] Template not found: C:\Users\Administrator\Desktop\website后台\7文件发放、收回和销毁记录.docx
+[WARN] Template not found: C:\Users\Administrator\Desktop\website后台\8D报告.docx
+[WARN] Template not found: C:\Users\Administrator\Desktop\website后台\9-岗位说明书.docx
+[WARN] Template not found: C:\Users\Administrator\Desktop\website后台\10.内 管理评审.docx
+[WARN] Template not found: C:\Users\Administrator\Desktop\website后台\10质量各种任命通知(3).docx
+[WARN] Template not found: C:\Users\Administrator\Desktop\website后台\13.质量目标分解考核.docx
+[WARN] Template not found: C:\Users\Administrator\Desktop\website后台\13成品召回演练记录.docx
+[WARN] Template not found: C:\Users\Administrator\Desktop\website后台\检验人员培训考试.docx
